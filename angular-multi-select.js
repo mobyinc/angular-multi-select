@@ -2,16 +2,15 @@
  * Angular Multi Select
  * Creates a dropdown-like button with checkboxes.
  *
- * Project started on: Tue, 14 Jan 2014 - 5:18:02 PM
  * Current version: 3.0.0
  *
- * Forked from github.com/isteven/angular-multi-select
+ * Originally forked from github.com/isteven/angular-multi-select
  *
  * Released under the MIT License
  * --------------------------------------------------------------------------------
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Ignatius Steven (https://github.com/isteven)
+ * Copyright (c) 2015 Moby, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,29 +52,29 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       maxLabels: '@',
       orientation: '@',
       selectionMode: '@',
-      minSearchLength: '@', // 3.0.0 - OK
+      minSearchLength: '@',
 
       // settings based on input model property
       tickProperty: '@',
       disableProperty: '@',
       groupProperty: '@',
-      searchProperty: '@', // 3.0.0 - OK
+      searchProperty: '@',
       maxHeight: '@',
 
       // callbacks
-      onClear: '&', // 3.0.0 - OK
+      onClear: '&',
       onClose: '&',
-      onSearchChange: '&', // 3.0.0 - OK
+      onSearchChange: '&',
       onItemClick: '&',
       onOpen: '&',
-      onReset: '&', // 3.0.0 - OK
-      onSelectAll: '&', // 3.0.0 - OK
-      onSelectNone: '&', // 3.0.0 - OK
+      onReset: '&',
+      onSelectAll: '&',
+      onSelectNone: '&',
 
       // i18n
-      translation: '=' // 3.0.0 - OK
+      translation: '='
     },
-    templateUrl: 'isteven-multi-select.htm',
+    templateUrl: 'multi-select.htm',
 
 
     link: function($scope, element, attrs) {
@@ -105,7 +104,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
         vMinSearchLength = 0,
         clickedItem = null;
 
-      // v3.0.0
       // clear button clicked
       $scope.clearClicked = function(e) {
         $scope.inputLabel.labelFilter = '';
@@ -514,7 +512,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
 
         // refresh button label...
         if ($scope.outputModel.length === 0) {
-          // https://github.com/isteven/angular-multi-select/pull/19
           $scope.varButtonLabel = $scope.lang.nothingSelected;
         } else {
           var tempMaxLabels = $scope.outputModel.length;
@@ -539,7 +536,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
           });
 
           if ($scope.more === true) {
-            // https://github.com/isteven/angular-multi-select/pull/16
             if (tempMaxLabels > 0) {
               $scope.varButtonLabel += ', ... ';
             }
@@ -1032,6 +1028,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
     '</div>' +
     '</span>';
 
-  $templateCache.put('isteven-multi-select.htm', template);
+  $templateCache.put('multi-select.htm', template);
 
 }]);
