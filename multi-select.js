@@ -34,7 +34,7 @@
 
 'use strict'
 
-angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$timeout', '$templateCache', function($sce, $timeout, $templateCache) {
+angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$timeout', function($sce, $timeout) {
   return {
     restrict: 'AE',
 
@@ -44,15 +44,15 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       outputModel: '=',
 
       // settings based on attribute
-      buttonLabel: '@',
       directiveId: '@',
-      helperElements: '@',
       isDisabled: '=',
       itemLabel: '@',
-      maxLabels: '@',
-      orientation: '@',
+      buttonLabel: '@',
       selectionMode: '@',
       minSearchLength: '@',
+      allSelectedLabel: '@',
+      noneSelectedLabel: '@',
+      someSelectedLabel: '@',
 
       // settings based on input model property
       tickProperty: '@',
@@ -66,15 +66,9 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       onClose: '&',
       onSearchChange: '&',
       onItemClick: '&',
-      onOpen: '&',
-      onReset: '&',
-      onSelectAll: '&',
-      onSelectNone: '&',
-
-      // i18n
-      translation: '='
+      onOpen: '&'
     },
-    templateUrl: 'multi-select.htm',
+    templateUrl: 'directives/multi-select.html',
 
 
     link: function($scope, element, attrs) {
@@ -83,20 +77,15 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       $scope.varButtonLabel = '';
       $scope.spacingProperty = '';
       $scope.indexProperty = '';
-      $scope.orientationH = false;
-      $scope.orientationV = true;
       $scope.filteredModel = [];
       $scope.inputLabel = {
         labelFilter: ''
       };
       $scope.tabIndex = 0;
-      $scope.lang = {};
       $scope.localModel = [];
 
       var
         prevTabIndex = 0,
-        helperItems = [],
-        helperItemsLength = 0,
         checkBoxLayer = '',
         scrolled = false,
         selectedItems = [],
@@ -222,28 +211,11 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       // This function will be called everytime the filter is updated. Not good for performance, but oh well..
       $scope.getFormElements = function() {
         formElements = [];
-        // Get helper - select & reset buttons
-        var selectButtons = element.children().children().next().children().children()[0].getElementsByTagName('button');
-        // Get helper - search
-        var inputField = element.children().children().next().children().children().next()[0].getElementsByTagName('input');
-        // Get helper - clear button
-        var clearButton = element.children().children().next().children().children().next()[0].getElementsByTagName('button');
-        // Get checkboxes
-        var checkboxes = element.children().children().next().children().next()[0].getElementsByTagName('input');
-        // Push them into global array formElements[]
-        for (var i = 0; i < selectButtons.length; i++) {
-          formElements.push(selectButtons[i]);
-        }
-        for (var i = 0; i < inputField.length; i++) {
-          formElements.push(inputField[i]);
-        }
-        for (var i = 0; i < clearButton.length; i++) {
-          formElements.push(clearButton[i]);
-        }
+        var checkboxes = element.children().children().next().children()[0].getElementsByTagName('input');
+
         for (var i = 0; i < checkboxes.length; i++) {
           formElements.push(checkboxes[i]);
         }
-
       }
 
       // check if an item has $scope.groupProperty (be it true or false)
@@ -255,50 +227,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       $scope.removeGroupEndMarker = function(item) {
         if (typeof item[$scope.groupProperty] !== 'undefined' && item[$scope.groupProperty] === false) return false;
         return true;
-      }
-
-
-      // Show or hide a helper element
-      $scope.displayHelper = function(elementString) {
-
-        if (attrs.selectionMode && $scope.selectionMode.toUpperCase() === 'SINGLE') {
-
-          switch (elementString.toUpperCase()) {
-            case 'ALL':
-              return false;
-              break;
-            case 'NONE':
-              return false;
-              break;
-            case 'RESET':
-              if (typeof attrs.helperElements === 'undefined') {
-                return true;
-              } else if (attrs.helperElements && $scope.helperElements.toUpperCase().indexOf('RESET') >= 0) {
-                return true;
-              }
-              break;
-            case 'FILTER':
-              if (typeof attrs.helperElements === 'undefined') {
-                return true;
-              }
-              if (attrs.helperElements && $scope.helperElements.toUpperCase().indexOf('FILTER') >= 0) {
-                return true;
-              }
-              break;
-            default:
-              break;
-          }
-
-          return false;
-        } else {
-          if (typeof attrs.helperElements === 'undefined') {
-            return true;
-          }
-          if (attrs.helperElements && $scope.helperElements.toUpperCase().indexOf(elementString.toUpperCase()) >= 0) {
-            return true;
-          }
-          return false;
-        }
       }
 
       // call this function when an item is clicked
@@ -474,7 +402,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
 
         // We update the index here
         prevTabIndex = $scope.tabIndex;
-        $scope.tabIndex = ng_repeat_index + helperItemsLength;
+        $scope.tabIndex = ng_repeat_index + 1; // TODO: remove
 
         // Set focus on the hidden checkbox
         e.target.focus();
@@ -512,35 +440,13 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
 
         // refresh button label...
         if ($scope.outputModel.length === 0) {
-          $scope.varButtonLabel = $scope.lang.nothingSelected;
+          $scope.varButtonLabel = $scope.noneSelectedLabel;
+        } else if ($scope.outputModel.length == $scope.inputModel.length) {
+          $scope.varButtonLabel = $scope.allSelectedLabel;
+        } else if ($scope.outputModel.length === 1) {
+          $scope.varButtonLabel = $scope.writeLabel($scope.outputModel[0], 'buttonLabel');
         } else {
-          var tempMaxLabels = $scope.outputModel.length;
-          if (typeof $scope.maxLabels !== 'undefined' && $scope.maxLabels !== '') {
-            tempMaxLabels = $scope.maxLabels;
-          }
-
-          // if max amount of labels displayed..
-          if ($scope.outputModel.length > tempMaxLabels) {
-            $scope.more = true;
-          } else {
-            $scope.more = false;
-          }
-
-          angular.forEach($scope.outputModel, function(value, key) {
-            if (typeof value !== 'undefined') {
-              if (ctr < tempMaxLabels) {
-                $scope.varButtonLabel += ($scope.varButtonLabel.length > 0 ? '</div>, <div class="buttonLabel">' : '<div class="buttonLabel">') + $scope.writeLabel(value, 'buttonLabel');
-              }
-              ctr++;
-            }
-          });
-
-          if ($scope.more === true) {
-            if (tempMaxLabels > 0) {
-              $scope.varButtonLabel += ', ... ';
-            }
-            $scope.varButtonLabel += '(' + $scope.outputModel.length + ')';
-          }
+          $scope.varButtonLabel = $scope.someSelectedLabel;
         }
         $scope.varButtonLabel = $sce.trustAsHtml($scope.varButtonLabel + '<span class="caret"></span>');
       }
@@ -617,9 +523,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
         }
         // open
         else {
-          helperItems = [];
-          helperItemsLength = 0;
-
           angular.element(checkBoxLayer).addClass('show');
           angular.element(clickedEl).addClass('buttonClicked');
 
@@ -633,24 +536,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
           $scope.getFormElements();
           $scope.tabIndex = 0;
 
-          var helperContainer = angular.element(element[0].querySelector('.helperContainer'))[0];
-
-          if (typeof helperContainer !== 'undefined') {
-            for (var i = 0; i < helperContainer.getElementsByTagName('BUTTON').length; i++) {
-              helperItems[i] = helperContainer.getElementsByTagName('BUTTON')[i];
-            }
-            helperItemsLength = helperItems.length + helperContainer.getElementsByTagName('INPUT').length;
-          }
-
-          // focus on the filter element on open.
-          if (element[0].querySelector('.inputFilter')) {
-            element[0].querySelector('.inputFilter').focus();
-            $scope.tabIndex = $scope.tabIndex + helperItemsLength - 2;
-          }
-          // if there's no filter then just focus on the first checkbox item
-          else {
-            formElements[$scope.tabIndex].focus();
-          }
+          formElements[$scope.tabIndex].focus();
 
           // open callback
           $scope.onOpen();
@@ -679,59 +565,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
 
         // set focus on button again
         element.children().children()[0].focus();
-      }
-
-      // select All / select None / reset buttons
-      $scope.select = function(type, e) {
-
-        var helperIndex = helperItems.indexOf(e.target);
-        $scope.tabIndex = helperIndex;
-
-        switch (type.toUpperCase()) {
-          case 'ALL':
-            angular.forEach($scope.filteredModel, function(value, key) {
-              if (typeof value !== 'undefined' && value[$scope.disableProperty] !== true) {
-                if (typeof value[$scope.groupProperty] === 'undefined') {
-                  value[$scope.tickProperty] = true;
-                }
-              }
-            });
-            $scope.refreshOutputModel();
-            $scope.refreshButton();
-            $scope.onSelectAll();
-            break;
-          case 'NONE':
-            angular.forEach($scope.filteredModel, function(value, key) {
-              if (typeof value !== 'undefined' && value[$scope.disableProperty] !== true) {
-                if (typeof value[$scope.groupProperty] === 'undefined') {
-                  value[$scope.tickProperty] = false;
-                }
-              }
-            });
-            $scope.refreshOutputModel();
-            $scope.refreshButton();
-            $scope.onSelectNone();
-            break;
-          case 'RESET':
-            angular.forEach($scope.filteredModel, function(value, key) {
-              if (typeof value[$scope.groupProperty] === 'undefined' && typeof value !== 'undefined' && value[$scope.disableProperty] !== true) {
-                var temp = value[$scope.indexProperty];
-                value[$scope.tickProperty] = $scope.backUp[temp][$scope.tickProperty];
-              }
-            });
-            $scope.refreshOutputModel();
-            $scope.refreshButton();
-            $scope.onReset();
-            break;
-          case 'CLEAR':
-            $scope.tabIndex = $scope.tabIndex + 1;
-            $scope.onClear();
-            break;
-          case 'FILTER':
-            $scope.tabIndex = helperItems.length - 1;
-            break;
-          default:
-        }
       }
 
       // just to create a random variable name
@@ -827,7 +660,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
             $scope.removeFocusStyle(prevTabIndex);
           } else {
             $scope.removeFocusStyle(prevTabIndex);
-            $scope.removeFocusStyle(helperItemsLength);
             $scope.removeFocusStyle(formElements.length - 1);
           }
         }
@@ -875,27 +707,6 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       if (typeof attrs.maxHeight !== 'undefined') {
         var layer = element.children().children().children()[0];
         angular.element(layer).attr("style", "height:" + $scope.maxHeight + "; overflow-y:scroll;");
-      }
-
-      // icons.. I guess you can use <img> tag here if you want to.
-      var icon = {};
-      icon.selectAll = '&#10003;' // a tick icon
-      icon.selectNone = '&times;' // x icon
-      icon.reset = '&#8630;' // undo icon
-
-      // configurable button labels
-      if (typeof attrs.translation !== 'undefined') {
-        $scope.lang.selectAll = $sce.trustAsHtml(icon.selectAll + '&nbsp;&nbsp;' + $scope.translation.selectAll);
-        $scope.lang.selectNone = $sce.trustAsHtml(icon.selectNone + '&nbsp;&nbsp;' + $scope.translation.selectNone);
-        $scope.lang.reset = $sce.trustAsHtml(icon.reset + '&nbsp;&nbsp;' + $scope.translation.reset);
-        $scope.lang.search = $scope.translation.search;
-        $scope.lang.nothingSelected = $sce.trustAsHtml($scope.translation.nothingSelected);
-      } else {
-        $scope.lang.selectAll = $sce.trustAsHtml(icon.selectAll + '&nbsp;&nbsp;Select All');
-        $scope.lang.selectNone = $sce.trustAsHtml(icon.selectNone + '&nbsp;&nbsp;Select None');
-        $scope.lang.reset = $sce.trustAsHtml(icon.reset + '&nbsp;&nbsp;Reset');
-        $scope.lang.search = 'Search...';
-        $scope.lang.nothingSelected = 'None Selected';
       }
 
       // min length of keyword to trigger the filter function
@@ -953,81 +764,4 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
       });
     }
   }
-}]).run(['$templateCache', function($templateCache) {
-  var template =
-    '<span class="multiSelect inlineBlock" id={{directiveId}}>' +
-    '<button type="button"' +
-    'ng-click="toggleCheckboxes( $event ); refreshSelectedItems(); refreshButton(); prepareGrouping; prepareIndex();"' +
-    'ng-bind-html="varButtonLabel">' +
-    '</button>' +
-    '<div class="checkboxLayer">' +
-
-    '<div class="helperContainer" ng-if="displayHelper( \'filter\' ) || displayHelper( \'all\' ) || displayHelper( \'none\' ) || displayHelper( \'reset\' )">' +
-    '<div class="line" ng-if="displayHelper( \'all\' ) || displayHelper( \'none\' ) || displayHelper( \'reset\' )">' +
-
-    '<button type="button" class="helperButton"' +
-    'ng-if="!isDisabled && displayHelper( \'all\' )"' +
-    'ng-click="select( \'all\', $event );"' +
-    'ng-bind-html="lang.selectAll">' +
-    '</button>' +
-
-    '<button type="button" class="helperButton"' +
-    'ng-if="!isDisabled && displayHelper( \'none\' )"' +
-    'ng-click="select( \'none\', $event );"' +
-    'ng-bind-html="lang.selectNone">' +
-    '</button>' +
-
-    '<button type="button" class="helperButton reset"' +
-    'ng-if="!isDisabled && displayHelper( \'reset\' )"' +
-    'ng-click="select( \'reset\', $event );"' +
-    'ng-bind-html="lang.reset">' +
-    '</button>' +
-    '</div>' +
-
-    '<div class="line" style="position:relative" ng-if="displayHelper( \'filter\' )">' +
-
-    '<input placeholder="{{lang.search}}" type="text"' +
-    'ng-click="select( \'filter\', $event )" ' +
-    'ng-model="inputLabel.labelFilter" ' +
-    'ng-change="searchChanged()" class="inputFilter"' +
-    '/>' +
-
-    '<button type="button" class="clearButton" ng-click="clearClicked( $event )" >×</button> ' +
-    '</div> ' +
-    '</div> ' +
-
-    '<div class="checkBoxContainer">' +
-    '<div ' +
-    'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem"' +
-    'ng-class="{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}"' +
-    'ng-click="syncItems( item, $event, $index );" ' +
-    'ng-mouseleave="removeFocusStyle( tabIndex );"> ' +
-
-    '<div class="acol" ng-if="item[ spacingProperty ] > 0" ng-repeat="i in numberToArray( item[ spacingProperty ] ) track by $index">' +
-
-    '</div>  ' +
-
-    '<div class="acol">' +
-
-    '<label>' +
-    '<input class="checkbox focusable" type="checkbox" ' +
-    'ng-disabled="itemIsDisabled( item )" ' +
-    'ng-checked="item[ tickProperty ]" ' +
-    'ng-click="syncItems( item, $event, $index )" />' +
-
-    '<span ' +
-    'ng-class="{disabled:itemIsDisabled( item )}" ' +
-    'ng-bind-html="writeLabel( item, \'itemLabel\' )">' +
-    '</span>' +
-    '</label>' +
-    '</div>' +
-
-    '<span class="tickMark" ng-if="item[ groupProperty ] !== true && item[ tickProperty ] === true">✔</span>' +
-    '</div>' +
-    '</div>' +
-    '</div>' +
-    '</span>';
-
-  $templateCache.put('multi-select.htm', template);
-
 }]);
