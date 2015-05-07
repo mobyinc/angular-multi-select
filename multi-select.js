@@ -448,7 +448,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
         } else {
           $scope.varButtonLabel = $scope.someSelectedLabel;
         }
-        $scope.varButtonLabel = $sce.trustAsHtml($scope.varButtonLabel + '<span class="caret"></span>');
+        //$scope.varButtonLabel = $sce.trustAsHtml($scope.varButtonLabel + '<span class="caret"></span>');
       }
 
       // Check if a checkbox is disabled or enabled. It will check the granular control (disableProperty) and global control (isDisabled)
@@ -475,7 +475,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
         var label = '';
 
         angular.forEach(temp, function(value, key) {
-          item[value] && (label += '&nbsp;' + value.split('.').reduce(function(prev, current) {
+          item[value] && (label += value.split('.').reduce(function(prev, current) {
             return prev[current];
           }, item));
         });
