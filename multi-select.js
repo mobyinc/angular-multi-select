@@ -405,7 +405,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
         $scope.tabIndex = ng_repeat_index + 1; // TODO: remove
 
         // Set focus on the hidden checkbox
-        e.target.focus();
+        // e.target.focus();
 
         // set & remove CSS style
         $scope.removeFocusStyle(prevTabIndex);
@@ -519,7 +519,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
           }, 0);
 
           // set focus on button again
-          element.children().children()[0].focus();
+          // element.children().children()[0].focus();
         }
         // open
         else {
@@ -536,7 +536,7 @@ angular.module('moby.multi-select', ['ng']).directive('multiSelect', ['$sce', '$
           $scope.getFormElements();
           $scope.tabIndex = 0;
 
-          formElements[$scope.tabIndex].focus();
+          // formElements[$scope.tabIndex].focus();
 
           // open callback
           $scope.onOpen();
